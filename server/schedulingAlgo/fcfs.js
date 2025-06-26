@@ -1,25 +1,39 @@
-import Encryptor from "file-encryptor";
-import path from "path";
-const key = "encryption key";
-const options = { algorithm: "sha256" };
+const fs = require("fs");
+const path = require("path");
+const crypto = require("crypto");
+
+const algorithm = "aes-256-cbc";
+const key = crypto.scryptSync("encryption key", "salt", 32);
+const iv = crypto.randomBytes(16);
 
 function simulateProcessing(fileName) {
   const time = Math.floor(Math.random() * 3000) + 1000;
-  console.log(`Processing: ${fileName} for ${time}ms`);
   return new Promise((resolve) => setTimeout(resolve, time));
 }
 
 function encryptFile(inputPath, outputPath) {
   return new Promise((resolve, reject) => {
-    Encryptor.encrypt(inputPath, outputPath, key, options, (err) => {
-      if (err) return reject(err);
-      console.log(`Encrypted: ${outputPath}`);
-      resolve();
-    });
+    const cipher = crypto.createCipheriv(algorithm, key, iv);
+    const input = fs.createReadStream(inputPath);
+    const output = fs.createWriteStream(outputPath);
+    input.pipe(cipher).pipe(output);
+    output.on("finish", resolve);
+    input.on("error", reject);
+    output.on("error", reject);
   });
 }
 
-export async function processFilesFCFS(fileQueue) {
+function deleteFileSafe(fileName) {
+  const filePath = path.join(__dirname, "..", "uploads", fileName);
+  fs.unlink(filePath, (err) => {
+    if (err && err.code !== "ENOENT") {
+      console.error(`Failed to delete ${filePath}:`, err.message);
+    }
+  });
+}
+
+
+async function processFilesFCFS(fileQueue) {
   const results = [];
 
   for (const { file, arrivalTime } of fileQueue) {
@@ -30,27 +44,26 @@ export async function processFilesFCFS(fileQueue) {
       `${path.parse(originalName).name}_encrypted${path.extname(originalName)}`
     );
 
-    console.log(
-      `Starting: ${originalName} at ${new Date(arrivalTime).toISOString()}`
-    );
-
     const start = Date.now();
     await simulateProcessing(originalName);
     await encryptFile(inputPath, encryptedPath);
     const end = Date.now();
-    const burstTime = end - start;
 
-    console.log(`Finished: ${originalName} at ${new Date(end).toISOString()}`);
-    console.log(`Burst Time: ${burstTime}ms`);
-
+    deleteFileSafe(originalName);
+    
     results.push({
       file: originalName,
       encryptedPath,
       arrivalTime,
       startTime: start,
       endTime: end,
-      burstTime,
+      burstTime: end - start,
     });
   }
+
   return results;
 }
+
+module.exports = {
+  processFilesFCFS,
+};

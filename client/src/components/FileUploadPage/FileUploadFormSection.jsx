@@ -81,8 +81,6 @@ const FileUploadFormSection = ({ filesList, setResult }) => {
             <option value="fcfs">FCFS</option>
             <option value="ljfs">LJFS</option>
             <option value="sjfs">SJFS</option>
-            <option value="rr">RR</option>
-            <option value="priority">Priority</option>
           </select>
         </div>
       )}

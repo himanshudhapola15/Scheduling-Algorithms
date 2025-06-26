@@ -1,29 +1,51 @@
-import Encryptor from "file-encryptor";
-import path from "path";
-const key = "encryption key";
-const options = { algorithm: "sha256" };
+const fs = require("fs");
+const path = require("path");
+const crypto = require("crypto");
+
+const algorithm = "aes-256-cbc";
+const key = crypto.scryptSync("encryption key", "salt", 32);
+const uploadDir = path.join(__dirname, "..", "uploads");
 
 function estimateProcessingTime() {
   return Math.floor(Math.random() * 3000) + 1000;
 }
 
 function simulateProcessing(fileName, time) {
-  console.log(`Processing: ${fileName} for ${time}ms`);
   return new Promise((resolve) => setTimeout(resolve, time));
 }
 
 function encryptFile(inputPath, outputPath) {
   return new Promise((resolve, reject) => {
-    Encryptor.encrypt(inputPath, outputPath, key, options, (err) => {
-      if (err) return reject(err);
-      console.log(`Encrypted: ${outputPath}`);
+    const iv = crypto.randomBytes(16);
+    const cipher = crypto.createCipheriv(algorithm, key, iv);
+    const input = fs.createReadStream(inputPath);
+    const output = fs.createWriteStream(outputPath);
+
+    input.pipe(cipher).pipe(output);
+
+    output.on("finish", () => {
       resolve();
     });
+
+    input.on("error", reject);
+    output.on("error", reject);
   });
 }
 
-export async function processFilesSJF(fileQueue) {
+function deleteFileSafe(fileName) {
+  const filePath = path.join(uploadDir, fileName);
+  try {
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+  } catch (err) {
+    console.error(`Failed to delete ${filePath}:`, err.message);
+  }
+}
+
+async function processFilesSJF(fileQueue) {
   const results = [];
+
   const fileQueueWithBurst = fileQueue.map(({ file, arrivalTime }) => {
     const estimatedBurst = estimateProcessingTime();
     return { file, arrivalTime, estimatedBurst };
@@ -33,25 +55,18 @@ export async function processFilesSJF(fileQueue) {
 
   for (const { file, arrivalTime, estimatedBurst } of fileQueueWithBurst) {
     const originalName = file.originalname;
-    const inputPath = file.path;
+    const inputPath = path.join(uploadDir, originalName); // correct path
     const encryptedPath = path.join(
-      path.dirname(inputPath),
+      uploadDir,
       `${path.parse(originalName).name}_encrypted${path.extname(originalName)}`
-    );
-
-    console.log(
-      `Starting: ${originalName} at ${new Date(arrivalTime).toISOString()}`
     );
 
     const start = Date.now();
     await simulateProcessing(originalName, estimatedBurst);
     await encryptFile(inputPath, encryptedPath);
     const end = Date.now();
-    const burstTime = end - start;
-
-    console.log(`Finished: ${originalName} at ${new Date(end).toISOString()}`);
-    console.log(`Burst Time: ${burstTime}ms`);
-
+    const burstTime = end - start
+    deleteFileSafe(originalName);
     results.push({
       file: originalName,
       encryptedPath,
@@ -64,3 +79,7 @@ export async function processFilesSJF(fileQueue) {
 
   return results;
 }
+
+module.exports = {
+  processFilesSJF,
+};

@@ -6,10 +6,6 @@ const fs = require("fs");
 const { processFilesFCFS } = require("../schedulingAlgo/fcfs");
 const { processFilesLJF } = require("../schedulingAlgo/ljfs");
 const { processFilesSJF } = require("../schedulingAlgo/sjfs");
-const { processFilesRR } = require("../schedulingAlgo/rr.js");
-const {
-  processFilesPriorityNonPreemptive,
-} = require("../schedulingAlgo/priority");
 
 const router = express.Router();
 
@@ -19,45 +15,45 @@ if (!fs.existsSync(uploadDir)) {
 }
 
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, uploadDir);
-  },
-  filename: function (req, file, cb) {
-    const uniqueName = `${Date.now()}-${file.originalname}`;
-    cb(null, uniqueName);
+  destination: (req, file, cb) => cb(null, uploadDir),
+  filename: (req, file, cb) => {
+    cb(null, file.originalname);
   },
 });
 
-const upload = multer({ storage });
-
-async function removeJunkFiles(files) {
-  files?.forEach((file) => {
-    if (file?.path) {
-      fs.unlink(file.path, (err) => {
-        if (err) {
-          console.log("Error deleting file:", err);
-        }
-      });
+function deleteUploadedFiles(files) {
+  files.forEach((file) => {
+    const filePath = path.join(uploadDir, file.originalname);
+    try {
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+        console.log(`Deleted: ${filePath}`);
+      }
+    } catch (err) {
+      console.error(`Error deleting ${filePath}:`, err.message);
     }
   });
-  console.log("Removed junk files");
 }
 
+
+const upload = multer({ storage });
+
 router.post("/", upload.array("files"), async (req, res) => {
+  const { files } = req;
+  const { algo } = req.body;
+
+  if (!files || files.length === 0) {
+    return res.json({ success: false, message: "No files received" });
+  }
+
+  const fileQueue = files.map((file) => ({
+    file,
+    arrivalTime: Date.now(),
+  }));
+
+  let result = [];
+
   try {
-    const { files } = req;
-    const { algo } = req.body;
-
-    if (!files || files.length === 0) {
-      return res.json({ success: false, message: "No files received" });
-    }
-    const fileQueue = files.map((file) => ({
-      file,
-      arrivalTime: Date.now(),
-    }));
-
-    let result = [];
-
     switch (algo) {
       case "fcfs":
         result = await processFilesFCFS(fileQueue);
@@ -68,31 +64,26 @@ router.post("/", upload.array("files"), async (req, res) => {
       case "sjfs":
         result = await processFilesSJF(fileQueue);
         break;
-      case "rr":
-        result = await processFilesRR(fileQueue);
-        break;
-      case "priority":
-        result = await processFilesPriorityNonPreemptive(fileQueue);
-        break;
       default:
         return res
           .status(400)
           .json({ success: false, message: "Invalid algorithm selected" });
     }
-
-    await removeJunkFiles(files);
+    deleteUploadedFiles(files);
 
     return res.json({
       success: true,
-      message: "Files uploaded successfully",
+      message: "Files processed and encrypted successfully",
       result,
     });
   } catch (err) {
-    console.error("Upload error:", err);
+    console.error("Upload error:", err);r
+    deleteUploadedFiles(files);
     return res
       .status(500)
       .json({ success: false, message: "File upload failed" });
   }
 });
+
 
 module.exports = router;
