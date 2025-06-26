@@ -20,7 +20,7 @@ export default function Navbar() {
           className="flex items-center space-x-2 border border-sky-300 bg-[#01090fcb] py-3 px-5 rounded-full"
         >
           <span className="block w-8 h-8 bg-gradient-to-br from-teal-400 to-blue-500 rounded-full"></span>
-          <span className="text-xl font-semibold">DHRV</span>
+          <span className="text-xl font-semibold">AlgoScheduler</span>
         </a>
 
         <div className="hidden md:flex md:items-center border border-sky-300 md:space-x-6 bg-[#01090fcb] py-2 px-4 rounded-full">
