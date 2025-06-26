@@ -32,7 +32,7 @@ A fully responsive, interactive web-based simulator that visualizes CPU and Disk
 ![Image](https://github.com/user-attachments/assets/c384bfd8-0b66-42ee-b361-bf6c9bc6345d)
 
 ## CPU Page
-![Screenshot 2025-06-25 232000](https://github.com/user-attachments/assets/9687b437-cb95-49ee-b9c9-fb6013517cf8)
+![Image](https://github.com/user-attachments/assets/ba2d1ec3-3981-4339-8d04-f411010c915a)
 
 ## Disk Scheduling
 ![Image](https://github.com/user-attachments/assets/20ae2919-8c4a-4bcb-99b3-f129956b8927)
