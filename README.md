@@ -2,6 +2,8 @@
 
 A fully responsive, interactive web-based simulator that visualizes CPU and Disk scheduling algorithms.
 
+# Link - https://scheduling-algorithms-rlxh.vercel.app/
+
 # Supported Algorithm
 ## CPU Scheduling
 - FCFS (First Come First Serve)
