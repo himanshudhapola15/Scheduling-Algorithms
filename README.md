@@ -31,10 +31,10 @@ A fully responsive, interactive web-based simulator that visualizes CPU and Disk
 - **Compare Algorithms**: Side-by-side performance comparison of all algorithms.
 
 ## HomePage
-![Image](https://github.com/user-attachments/assets/c384bfd8-0b66-42ee-b361-bf6c9bc6345d)
+![Image](https://github.com/user-attachments/assets/316a4b70-7e21-4247-bb8b-2b39ab48ef12)
 
 ## CPU Page
-![Image](https://github.com/user-attachments/assets/ba2d1ec3-3981-4339-8d04-f411010c915a)
+![Image](https://github.com/user-attachments/assets/0a1ff38a-0b55-45f2-8b02-4b8d33499785)
 
 ## Disk Scheduling
-![Image](https://github.com/user-attachments/assets/20ae2919-8c4a-4bcb-99b3-f129956b8927)
+![Image](https://github.com/user-attachments/assets/f6d7cbaa-aa14-4930-879c-58332ea29046)
